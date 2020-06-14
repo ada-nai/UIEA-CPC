@@ -84,8 +84,8 @@ class FaceDetection:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        width =  int(frame.shape[0]) #1920
-        height = int(frame.shape[1]) #1080
+        width =  int(frame.shape[1]) #1920
+        height = int(frame.shape[0]) #1080
         # width =  1920
         # height = 1080
         print('Post results', (width, height))

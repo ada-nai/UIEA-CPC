@@ -27,10 +27,10 @@ class InputFeeder:
     def load_data(self):
         if self.input_type=='video':
             self.cap=cv2.VideoCapture(self.input_file)
-            self.cap.open(self.input_file)
+            # self.cap.open(self.input_file)
         elif self.input_type=='cam':
             self.cap=cv2.VideoCapture(0)
-            self.cap.open(0)
+            # self.cap.open(0)
         else:
             self.cap=cv2.imread(self.input_file)
 
@@ -43,7 +43,7 @@ class InputFeeder:
         Returns the next image from either a video file or webcam.
         If input_type is 'image', then it returns the same image.
         '''
-        while self.cap.isOpened:
+        while True:
             for flag in range(10):
                 flag, frame=self.cap.read()
                 if not flag:
