@@ -105,7 +105,7 @@ def flow(args):
         # print('face ip dims', landmark_ip.shape)
         landmark_op = landmark.predict(landmark_ip)
         # print(landmark_op) #, landmark_op.shape)
-        batch, lEye, rEye = landmark.preprocess_output(face_box, landmark_op)
+        batch, lEye, rEye = landmark.preprocess_output(batch, landmark_op)
         cv2.imshow('CPC', batch)
         print('eye shape - rEye: ', rEye.shape, 'lEye: ', lEye.shape)
 
@@ -114,11 +114,12 @@ def flow(args):
         head_pose_ip = head_pose.preprocess_input(face_box)
         head_pose_op = head_pose.predict(head_pose_ip)
         axes_op = head_pose.preprocess_output(head_pose_op)
-        # print(axes_op, axes_op.shape)
+        print(axes_op, axes_op.shape)
 
         # TODO: send landmark and head_pose results to gaze
         gaze_lEye = gaze_estimation.preprocess_input(lEye)
         gaze_rEye = gaze_estimation.preprocess_input(rEye)
+        print(gaze_lEye.shape, gaze_rEye.shape)
         gaze_op = gaze_estimation.predict(axes_op, lEye, rEye)
 
         # TODO: send gaze results to mouse_controller

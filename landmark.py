@@ -87,7 +87,7 @@ class LandmarkDetection:
         '''
         width =  int(frame.shape[1]) #1920
         height = int(frame.shape[0]) #1080
-        r_radius = 50
+        r_radius = 75
         c_radius = 5
 
         # print('landmark frame size: ', width, height)

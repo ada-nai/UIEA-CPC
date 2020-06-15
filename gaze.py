@@ -39,9 +39,9 @@ class GazeEstimation:
         self.left_eye_image = next(gaze_iter)
         self.right_eye_image = next(gaze_iter)
 
-        # self.head_pose_angles_shape = self.head_pose_angles.shape
-        # self.left_eye_image_shape = self.left_eye_image.shape
-        # self.right_eye_image_shape = self.right_eye_image.shape
+        self.head_pose_angles_shape = self.network.inputs[self.head_pose_angles].shape
+        self.left_eye_image_shape = self.network.inputs[self.left_eye_image].shape
+        self.right_eye_image_shape = self.network.inputs[self.right_eye_image].shape
 
         self.output = next(iter(self.network.outputs))
         self.output_shape = self.network.outputs[self.output].shape
@@ -76,10 +76,13 @@ class GazeEstimation:
         #     print('Output could not be evaluated')
 
         # gaze_result = np.squeeze(gaze_result['95']) #['detection_out'] #CHECK THIS
-        return gaze_result
+        # return gaze_result
 
     def check_model(self):
         print('gaze model inputs: ',self.head_pose_angles, self.left_eye_image, self.right_eye_image)
+        print('head pose shape',self.head_pose_angles_shape)
+        print('eye images shape:', self.left_eye_image_shape)
+        print('gaze output shape', self.output_shape)
 
 
     def preprocess_input(self, image):
@@ -90,7 +93,7 @@ class GazeEstimation:
         try:
             temp = image.copy()
             # print('preprocess shape: ',  temp.shape)
-            temp = cv2.resize(temp, (60, 60) ) # n,c,h,w
+            temp = cv2.resize(temp, (self.left_eye_image_shape[3], self.left_eye_image_shape[2]) ) # n,c,h,w
             temp = temp.transpose((2, 0, 1))
             temp = temp.reshape(1, *temp.shape)
             # print('post process shape: ',temp.shape)
