@@ -50,9 +50,22 @@ def build_argparser():
 
 def flow(args):
     # TODO: Load all the models
+
     face = FaceDetection()
     face.load_model()
     face.check_model()
+
+    landmark = LandmarkDetection()
+    landmark.load_model()
+    landmark.check_model()
+
+    head_pose = HeadPoseEstimation()
+    head_pose.load_model()
+    head_pose.check_model()
+
+    gaze_estimation = GazeEstimation()
+    gaze_estimation.load_model()
+    gaze_estimation.check_model()
 
     log.info('Models loaded')
 
@@ -67,7 +80,7 @@ def flow(args):
     for batch in feed.next_batch():
         # if batch is not None:
         # cv2.imshow('CPC', batch)
-        print('batch', batch.shape)
+        # print('batch', batch.shape)
         key = cv2.waitKey(500)
         if key == ord('x'):
             log.warning('KeyboardInterrupt \n Feed closed')
@@ -77,22 +90,38 @@ def flow(args):
         #     print('Stream ended or error')
         #     sys.exit()
         # print('batch type:' ,type(batch))
+
+
         # TODO: send frame to face detection model
         face_ip = face.preprocess_input(batch)
-        print('face ip dims', face_ip.shape)
+        # print('face ip dims', face_ip.shape)
         face_op = face.predict(face_ip)
-        face_boxes = face.preprocess_output(batch, face_op)
-        # cv2.imshow('CPC', face_boxes)
+        batch, face_box = face.preprocess_output(batch, face_op)
+        # cv2.imshow('CPC', face_box)
+
+
         # TODO: send face results to landmark
+        landmark_ip = landmark.preprocess_input(face_box)
+        # print('face ip dims', landmark_ip.shape)
+        landmark_op = landmark.predict(landmark_ip)
+        # print(landmark_op) #, landmark_op.shape)
+        batch, lEye, rEye = landmark.preprocess_output(face_box, landmark_op)
+        cv2.imshow('CPC', batch)
+        print('eye shape - rEye: ', rEye.shape, 'lEye: ', lEye.shape)
 
 
         # TODO: send face results to head_pose
-
+        head_pose_ip = head_pose.preprocess_input(face_box)
+        head_pose_op = head_pose.predict(head_pose_ip)
+        axes_op = head_pose.preprocess_output(head_pose_op)
+        # print(axes_op, axes_op.shape)
 
         # TODO: send landmark and head_pose results to gaze
+        gaze_lEye = gaze_estimation.preprocess_input(lEye)
+        gaze_rEye = gaze_estimation.preprocess_input(rEye)
+        gaze_op = gaze_estimation.predict(axes_op, lEye, rEye)
 
-
-        # TODO: send gaze results to
+        # TODO: send gaze results to mouse_controller
     feed.close()
     log.info('Feed closed')
 

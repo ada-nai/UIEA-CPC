@@ -10,7 +10,8 @@ import numpy as np
 import cv2
 from openvino.inference_engine import IENetwork, IECore
 
-class FaceDetection:
+
+class HeadPoseEstimation:
     '''
     Class for the Face Detection Model.
     '''
@@ -26,17 +27,16 @@ class FaceDetection:
         self.exec_net = None
 
         # TODO: Save path of .bin and .xml files of model
-        face_xml = os.path.abspath('../intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001.xml')
-        face_bin = os.path.splitext(face_xml)[0]+'.bin'
+        head_pose_xml = os.path.abspath('../intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001.xml')
+        head_pose_bin = os.path.splitext(head_pose_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
-        self.network = IENetwork(face_xml, face_bin)
+        self.network = IENetwork(head_pose_xml, head_pose_bin)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
         self.output = next(iter(self.network.outputs))
         self.output_shape = self.network.outputs[self.output].shape
-
 
 
     def load_model(self):
@@ -45,28 +45,29 @@ class FaceDetection:
         This method is for loading the model to the device specified by the user.
         If your model requires any Plugins, this is where you can load them.
         '''
-
         try:
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            raise NotImplementedError('Face Detection Model could not be initialized/loaded.', e)
+            raise NotImplementedError('head_pose Detection Model could not be initialized/loaded.', e)
         return
+
 
     def predict(self, image):
         '''
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        face_input = {self.input: image}
-        face_result = self.exec_net.infer(face_input)
-        face_result = face_result['detection_out']
-        return face_result
+        head_pose_input = {self.input: image}
+        head_pose_result = self.exec_net.infer(head_pose_input)
+        #print(head_pose_result)
+        # head_pose_result = np.squeeze(head_pose_result['95']) #['detection_out'] #CHECK THIS
+        return head_pose_result
 
     def check_model(self):
-        print('Face Model Input shape: ', self.input_shape)
-        print('Face Model Output shape: ', self.output_shape)
+        print('head_pose Model Input shape: ', self.input_shape)
+        print('head_pose Model Output shape: ', self.output_shape)
 
 
     def preprocess_input(self, image):
@@ -75,29 +76,22 @@ class FaceDetection:
         you might have to preprocess it. This function is where you can do that.
         '''
         temp = image.copy()
+        # print('preprocess shape: ',  temp.shape)
         temp = cv2.resize(temp, (self.input_shape[3], self.input_shape[2] ) ) # n,c,h,w
         temp = temp.transpose((2, 0, 1))
         temp = temp.reshape(1, *temp.shape)
+        # print('post process shape: ',temp.shape)
         return temp
 
-    def preprocess_output(self, frame, outputs):
+    def preprocess_output(self, outputs):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        width =  int(frame.shape[1]) #1920
-        height = int(frame.shape[0]) #1080
-        # width =  1920
-        # height = 1080
-        # print('Post results', (width, height))
-        output = np.squeeze(outputs)[0]
-        # print('face op normalized: ', output[3], output[4], output[5], output[6])
-        x_min = int(output[3] * width)
-        y_min = int(output[4] * height)
-        x_max = int(output[5] * width)
-        y_max = int(output[6] * height)
-        # print('face op denormalized',x_min, y_min, x_max, y_max)
-        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
-        # cv2.imshow('class_frame', frame)
-        face = frame[y_min:y_max, x_min:x_max]
-        return frame, face
+        pitch = np.squeeze(outputs['angle_p_fc'])
+        roll = np.squeeze(outputs['angle_r_fc'])
+        yaw = np.squeeze(outputs['angle_y_fc'])
+        axes_op = np.array([[pitch, roll, yaw]])
+
+
+        return axes_op
