@@ -27,7 +27,7 @@ class HeadPoseEstimation:
         self.exec_net = None
 
         # TODO: Save path of .bin and .xml files of model
-        head_pose_xml = os.path.abspath('../intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001.xml')
+        head_pose_xml = os.path.abspath('../intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.xml')
         head_pose_bin = os.path.splitext(head_pose_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
@@ -66,8 +66,9 @@ class HeadPoseEstimation:
         return head_pose_result
 
     def check_model(self):
-        print('head_pose Model Input shape: ', self.input_shape)
-        print('head_pose Model Output shape: ', self.output_shape)
+        log.info('head_pose Model Input shape: ', self.input_shape)
+        log.info('head_pose Model Output shape: ', self.output_shape)
+        pass
 
 
     def preprocess_input(self, image):

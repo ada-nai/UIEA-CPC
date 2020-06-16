@@ -65,9 +65,9 @@ class FaceDetection:
         return face_result
 
     def check_model(self):
-        print('Face Model Input shape: ', self.input_shape)
-        print('Face Model Output shape: ', self.output_shape)
-
+        log.info('Face Model Input shape: ', self.input_shape)
+        log.info('Face Model Output shape: ', self.output_shape)
+        pass
 
     def preprocess_input(self, image):
         '''

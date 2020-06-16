@@ -27,7 +27,7 @@ class LandmarkDetection:
         self.exec_net = None
 
         # TODO: Save path of .bin and .xml files of model
-        landmark_xml = os.path.abspath('../intel/landmarks-regression-retail-0009/FP16/landmarks-regression-retail-0009.xml')
+        landmark_xml = os.path.abspath('../intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.xml')
         landmark_bin = os.path.splitext(landmark_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
@@ -64,8 +64,9 @@ class LandmarkDetection:
         return landmark_result
 
     def check_model(self):
-        print('landmark Model Input shape: ', self.input_shape)
-        print('landmark Model Output shape: ', self.output_shape)
+        log.info('landmark Model Input shape: ', self.input_shape)
+        log.info('landmark Model Output shape: ', self.output_shape)
+        pass
 
     def preprocess_input(self, image):
         '''
@@ -96,7 +97,7 @@ class LandmarkDetection:
         #### HOLD
         x_scale = 1920
         y_scale = 1080
-        x_lEye = int(outputs[0] * width)
+        x_lEye= int(outputs[0] * width)
         y_lEye = int(outputs[1] * height)
         x_rEye = int(outputs[2] * width)
         y_rEye = int(outputs[3] * height)

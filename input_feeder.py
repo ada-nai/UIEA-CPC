@@ -36,7 +36,7 @@ class InputFeeder:
 
         self.frame_width = int(self.cap.get(3))
         self.frame_height = int(self.cap.get(4))
-        print('Original Frame dimeensions (width, height): ',self.frame_width, self.frame_height)
+        # log.info('Original Frame dimeensions (width, height): ',self.frame_width, self.frame_height)
 
     def next_batch(self):
         '''
@@ -47,7 +47,7 @@ class InputFeeder:
             for flag in range(10):
                 flag, frame=self.cap.read()
                 if not flag:
-                    print('Stream ended or error')
+                    log.info('Stream ended or error')
                     sys.exit()
                 # print('next batch')
                 # print(frame)
@@ -60,3 +60,4 @@ class InputFeeder:
         '''
         if not self.input_type=='image':
             self.cap.release()
+    

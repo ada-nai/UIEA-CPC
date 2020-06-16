@@ -28,7 +28,7 @@ class GazeEstimation:
         self.exec_net = None
 
         # TODO: Save path of .bin and .xml files of model
-        gaze_xml = os.path.abspath('../intel/gaze-estimation-adas-0002/FP16/gaze-estimation-adas-0002.xml')
+        gaze_xml = os.path.abspath('../intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002.xml')
         gaze_bin = os.path.splitext(gaze_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
@@ -71,18 +71,20 @@ class GazeEstimation:
         gaze_input = {self.head_pose_angles: axes_arr, self.left_eye_image: left_eye, self.right_eye_image: right_eye}
         # try:
         gaze_result = self.exec_net.infer(gaze_input)
-        print(gaze_result)
+        # print(gaze_result)
         # except:
         #     print('Output could not be evaluated')
 
         # gaze_result = np.squeeze(gaze_result['95']) #['detection_out'] #CHECK THIS
-        # return gaze_result
+        return gaze_result
 
     def check_model(self):
-        print('gaze model inputs: ',self.head_pose_angles, self.left_eye_image, self.right_eye_image)
-        print('head pose shape',self.head_pose_angles_shape)
-        print('eye images shape:', self.left_eye_image_shape)
-        print('gaze output shape', self.output_shape)
+        log.info('gaze model inputs: ',self.head_pose_angles, self.left_eye_image, self.right_eye_image)
+        log.info('head pose shape',self.head_pose_angles_shape)
+        log.info('eye images shape:', self.left_eye_image_shape)
+        log.info('gaze output: ', self.output)
+        log.info('gaze output shape', self.output_shape)
+        pass
 
 
     def preprocess_input(self, image):
@@ -107,4 +109,8 @@ class GazeEstimation:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        raise NotImplementedError
+        output = np.squeeze(outputs['gaze_vector'])
+        x = output[0]
+        y = output[1]
+        z = output[2]
+        return x, y, z

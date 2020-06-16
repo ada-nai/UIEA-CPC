@@ -81,7 +81,7 @@ def flow(args):
         # if batch is not None:
         # cv2.imshow('CPC', batch)
         # print('batch', batch.shape)
-        key = cv2.waitKey(500)
+        key = cv2.waitKey(1000)
         if key == ord('x'):
             log.warning('KeyboardInterrupt \n Feed closed')
             raise KeyboardInterrupt('X was pressed')
@@ -107,22 +107,25 @@ def flow(args):
         # print(landmark_op) #, landmark_op.shape)
         batch, lEye, rEye = landmark.preprocess_output(batch, landmark_op)
         cv2.imshow('CPC', batch)
-        print('eye shape - rEye: ', rEye.shape, 'lEye: ', lEye.shape)
+        # log.info('eye shape - rEye: ', rEye.shape, 'lEye: ', lEye.shape)
 
 
         # TODO: send face results to head_pose
         head_pose_ip = head_pose.preprocess_input(face_box)
         head_pose_op = head_pose.predict(head_pose_ip)
         axes_op = head_pose.preprocess_output(head_pose_op)
-        print(axes_op, axes_op.shape)
+        # print(axes_op, axes_op.shape)
 
         # TODO: send landmark and head_pose results to gaze
         gaze_lEye = gaze_estimation.preprocess_input(lEye)
         gaze_rEye = gaze_estimation.preprocess_input(rEye)
-        print(gaze_lEye.shape, gaze_rEye.shape)
-        gaze_op = gaze_estimation.predict(axes_op, lEye, rEye)
-
+        # print(gaze_lEye.shape, gaze_rEye.shape)
+        gaze_op = gaze_estimation.predict(axes_op, gaze_lEye, gaze_rEye)
+        x, y, z = gaze_estimation.preprocess_output(gaze_op)
         # TODO: send gaze results to mouse_controller
+        mc = MouseController('high', 'fast')
+        mc.move(x, y)
+
     feed.close()
     log.info('Feed closed')
 
