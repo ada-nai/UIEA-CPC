@@ -87,16 +87,18 @@ class FaceDetection:
         temp = temp.reshape(1, *temp.shape)
         return temp
 
-    def preprocess_output(self, frame, outputs):
+    def preprocess_output(self, frame, outputs, vf):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
+        vf = bool(vf)
+        print('face vf', vf)
         width =  int(frame.shape[1]) #1920
         height = int(frame.shape[0]) #1080
         # width =  1920
         # height = 1080
-        print('Post results', (width, height))
+        # print('Post results', (width, height))
         output = np.squeeze(outputs)[0]
         # print('face op normalized: ', output[3], output[4], output[5], output[6])
         x_min = int(output[3] * width)
@@ -107,8 +109,9 @@ class FaceDetection:
         f_center = (x_min + width / 2, y_min + height / 2, 0)
 
         # print('face op denormalized',x_min, y_min, x_max, y_max)
-        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
-        print((x_min, y_min), (x_max, y_max))
+        if vf is True:
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
+        # print((x_min, y_min), (x_max, y_max))
         # cv2.imshow('Computer Pointer Controller', frame)
         face = frame[y_min:y_max, x_min:x_max]
         return frame, face, f_center

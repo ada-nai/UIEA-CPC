@@ -7,7 +7,7 @@ Calling the move function with the x and y output of the gaze estimation model
 will move the pointer.
 This class is provided to help get you started; you can choose whether you want to use it or create your own from scratch.
 '''
-import logging as log       
+import logging as log
 import pyautogui
 
 class MouseController:

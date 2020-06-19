@@ -93,8 +93,9 @@ class LandmarkDetection:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        width = 367 #int(frame.shape[1]) #1920
-        height = 246 #int(frame.shape[0]) #1080
+        temp_op = frame.copy()
+        width = int(frame.shape[1]) #1920
+        height = int(frame.shape[0]) #1080
         r_radius = 10
         c_radius = 5
 
@@ -102,8 +103,8 @@ class LandmarkDetection:
 
         # print('landmark op normalized: ', outputs[0], outputs[1], outputs[2], outputs[3])
         #### HOLD
-        x_scale = 1920/367
-        y_scale = 1080/246
+        # x_scale = 1920/367
+        # y_scale = 1080/246
         x_lEye= int(outputs[0] * width)
         y_lEye = int(outputs[1] * height)
         x_rEye = int(outputs[2] * width)
@@ -117,18 +118,18 @@ class LandmarkDetection:
 
         # print('landmark op denormalized: ', x_lEye, y_lEye, x_rEye, y_rEye)
 
-        cv2.circle(frame, (x_lEye, y_lEye), c_radius, (0, 0, 255), 2)
-        cv2.circle(frame, (x_rEye, y_rEye), c_radius, (0, 0, 255), 2)
-        cv2.circle(frame, (x_nose, y_nose), c_radius, (0, 255, 0), 2)
-        cv2.circle(frame, (x_lLip, y_lLip), c_radius, (255, 0, 0), 2)
-        cv2.circle(frame, (x_rLip, y_rLip), c_radius, (255, 0, 0), 2)
+        cv2.circle(temp_op, (x_lEye, y_lEye), c_radius, (0, 0, 255), 2)
+        cv2.circle(temp_op, (x_rEye, y_rEye), c_radius, (0, 0, 255), 2)
+        cv2.circle(temp_op, (x_nose, y_nose), c_radius, (0, 255, 0), 2)
+        cv2.circle(temp_op, (x_lLip, y_lLip), c_radius, (255, 0, 0), 2)
+        cv2.circle(temp_op, (x_rLip, y_rLip), c_radius, (255, 0, 0), 2)
         # cv2.imshow('class_frame', frame)
 
         # print(x_lEye, y_lEye)
-        lEye = frame[y_lEye-r_radius : y_lEye+r_radius , x_lEye-r_radius : x_lEye+r_radius]
+        lEye = temp_op[y_lEye-r_radius : y_lEye+r_radius , x_lEye-r_radius : x_lEye+r_radius]
         # cv2.imshow('lEye', lEye)
-        rEye = frame[y_rEye-r_radius : y_rEye+r_radius , x_rEye-r_radius : x_rEye+r_radius]
+        rEye = temp_op[y_rEye-r_radius : y_rEye+r_radius , x_rEye-r_radius : x_rEye+r_radius]
         # cv2.imshow('rEye', rEye)
 
 
-        return frame, lEye, rEye
+        return temp_op, lEye, rEye

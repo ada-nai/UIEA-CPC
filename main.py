@@ -41,14 +41,20 @@ def build_argparser():
     #                          "will look for a suitable plugin for device "
     #                          "specified (CPU by default)")
     # parser.add_argument("-if", "--input_type", type=str, default="video",
-    #                     help="Input media format to the models. 'cam' or 'video'. Default set to 'video'"
-    #                     "(0.5 by default)")
+    #                     help=" Input media format to the models. 'cam' or 'video'. Default set to 'video' ")
+    parser.add_argument("-vf", "--visual_flag", type=str, default= 0,
+                        help="Flag for visualization of model outputs. Can be 0 or 1. Default set to 0.")
     args = parser.parse_args()
 
     return args
 
 
 def flow(args):
+    if args.visual_flag is None:
+        args.visual_flag == 0
+        log.info('Flag not input, so set to `False`')
+    vflag = bool(int(args.visual_flag))
+    print('Flag: ', vflag, type(vflag))
     # total + model_initial + process/prediction
     tfproc = 0
     tfpred = 0
@@ -139,8 +145,9 @@ def flow(args):
         face_op = face.predict(face_ip)
         fpred = time.time() - fpreds
         tfpred += fpred
-        batch, face_box, face_center = face.preprocess_output(batch, face_op)
-        # cv2.imshow('CPC', face_box)
+        batch, face_box, face_center = face.preprocess_output(batch, face_op, vflag)
+        cv2.imshow('Computer Pointer Window', batch)
+        # print(face_box.shape)
 
 
         # TODO: send face results to landmark
@@ -156,8 +163,9 @@ def flow(args):
         tlpred += lpred
 
         # print(landmark_op) #, landmark_op.shape)
-        batch, lEye, rEye = landmark.preprocess_output(batch, landmark_op)
-        cv2.imshow('CPC', batch)
+        face_box_window, lEye, rEye = landmark.preprocess_output(face_box, landmark_op)
+        if vflag is True:
+            cv2.imshow('Visualized Output', face_box_window)
         # log.info('eye shape - rEye: ', rEye.shape, 'lEye: ', lEye.shape)
 
 
@@ -173,7 +181,8 @@ def flow(args):
         thpred += hpred
 
         batch, axes_op = head_pose.preprocess_output(batch, head_pose_op, face_center)
-        cv2.imshow('CPC', batch)
+        if vflag is True:
+            cv2.imshow('Computer Pointer Window', batch) # Visualized Output
         # print(axes_op, axes_op.shape)
 
         # TODO: send landmark and head_pose results to gaze
@@ -192,7 +201,7 @@ def flow(args):
         x, y, z = gaze_estimation.preprocess_output(gaze_op)
         # TODO: send gaze results to mouse_controller
         mc = MouseController('high', 'fast')
-        # mc.move(x, y)
+        mc.move(x, y)
 
         count += 1
         print(count)
@@ -244,7 +253,7 @@ def main():
     # Grab command line args
     args = build_argparser()
     log.basicConfig(filename='CPC.log',level=log.INFO)
-
+    print(args.visual_flag)
     flow(args)
 
 
