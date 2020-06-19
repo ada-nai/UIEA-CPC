@@ -30,7 +30,10 @@ class FaceDetection:
         face_bin = os.path.splitext(face_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
-        self.network = IENetwork(face_xml, face_bin)
+        try:
+            self.network = IENetwork(face_xml, face_bin)
+        except Exception as e:
+            log.info('Face Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
@@ -46,12 +49,13 @@ class FaceDetection:
         If your model requires any Plugins, this is where you can load them.
         '''
 
-        try:
+
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
+        try:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            raise NotImplementedError('Face Detection Model could not be initialized/loaded.', e)
+            log.info('Face Detection IECore object could not be initialized/loaded.', e)
         return
 
     def predict(self, image):
@@ -59,14 +63,17 @@ class FaceDetection:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        face_input = {self.input: image}
-        face_result = self.exec_net.infer(face_input)
-        face_result = face_result['detection_out']
+        try:
+            face_input = {self.input: image}
+            face_result = self.exec_net.infer(face_input)
+            face_result = face_result['detection_out']
+        except Exception as e:
+            log.info('Face Detection inference error: ', e)
         return face_result
 
     def check_model(self):
-        log.info('Face Model Input shape: ', self.input_shape)
-        log.info('Face Model Output shape: ', self.output_shape)
+        log.info('Face Model Input shape: {0} '.format( str(self.input_shape) ))
+        log.info('Face Model Output shape: {0}'.format( str(self.output_shape) ))
         pass
 
     def preprocess_input(self, image):
@@ -89,15 +96,19 @@ class FaceDetection:
         height = int(frame.shape[0]) #1080
         # width =  1920
         # height = 1080
-        # print('Post results', (width, height))
+        print('Post results', (width, height))
         output = np.squeeze(outputs)[0]
         # print('face op normalized: ', output[3], output[4], output[5], output[6])
         x_min = int(output[3] * width)
         y_min = int(output[4] * height)
         x_max = int(output[5] * width)
         y_max = int(output[6] * height)
+
+        f_center = (x_min + width / 2, y_min + height / 2, 0)
+
         # print('face op denormalized',x_min, y_min, x_max, y_max)
         cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
-        # cv2.imshow('class_frame', frame)
+        print((x_min, y_min), (x_max, y_max))
+        # cv2.imshow('Computer Pointer Controller', frame)
         face = frame[y_min:y_max, x_min:x_max]
-        return frame, face
+        return frame, face, f_center

@@ -32,7 +32,10 @@ class GazeEstimation:
         gaze_bin = os.path.splitext(gaze_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
-        self.network = IENetwork(gaze_xml, gaze_bin)
+        try:
+            self.network = IENetwork(gaze_xml, gaze_bin)
+        except Exception as e:
+            log.info('Gaze Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         gaze_iter = iter(self.network.inputs)
         self.head_pose_angles = next(gaze_iter)
@@ -53,12 +56,13 @@ class GazeEstimation:
         This method is for loading the model to the device specified by the user.
         If your model requires any Plugins, this is where you can load them.
         '''
-        try:
+
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
+        try:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            raise NotImplementedError('gaze Detection Model could not be initialized/loaded.', e)
+            log.info('Gaze Estimation IECore object could not be initialized/loaded.', e)
         return
 
 
@@ -68,22 +72,25 @@ class GazeEstimation:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        gaze_input = {self.head_pose_angles: axes_arr, self.left_eye_image: left_eye, self.right_eye_image: right_eye}
-        # try:
-        gaze_result = self.exec_net.infer(gaze_input)
-        # print(gaze_result)
-        # except:
-        #     print('Output could not be evaluated')
+        try:
+            gaze_input = {self.head_pose_angles: axes_arr, self.left_eye_image: left_eye, self.right_eye_image: right_eye}
+            # try:
+            gaze_result = self.exec_net.infer(gaze_input)
+            # print(gaze_result)
+            # except:
+            #     print('Output could not be evaluated')
+        except Exception as e:
+            log.info('Gaze Estimation inference error: ', e)
 
         # gaze_result = np.squeeze(gaze_result['95']) #['detection_out'] #CHECK THIS
         return gaze_result
 
     def check_model(self):
-        log.info('gaze model inputs: ',self.head_pose_angles, self.left_eye_image, self.right_eye_image)
-        log.info('head pose shape',self.head_pose_angles_shape)
-        log.info('eye images shape:', self.left_eye_image_shape)
-        log.info('gaze output: ', self.output)
-        log.info('gaze output shape', self.output_shape)
+        log.info('gaze model inputs: {0}, {1}, {2}'.format(self.head_pose_angles, self.left_eye_image, self.right_eye_image))
+        log.info('head pose shape: {0}'.format(self.head_pose_angles_shape))
+        log.info('eye images shape: {0}'.format( self.left_eye_image_shape))
+        log.info('gaze output: {0}'.format(self.output))
+        log.info('gaze output shape: {0}'.format( self.output_shape))
         pass
 
 
@@ -100,7 +107,7 @@ class GazeEstimation:
             temp = temp.reshape(1, *temp.shape)
             # print('post process shape: ',temp.shape)
         except:
-            print('Frame ignored')
+            log.info('Frame ignored')
         return temp
 
 

@@ -7,6 +7,7 @@ Calling the move function with the x and y output of the gaze estimation model
 will move the pointer.
 This class is provided to help get you started; you can choose whether you want to use it or create your own from scratch.
 '''
+import logging as log       
 import pyautogui
 
 class MouseController:
@@ -18,4 +19,7 @@ class MouseController:
         self.speed=speed_dict[speed]
 
     def move(self, x, y):
-        pyautogui.moveRel(x*self.precision, -1*y*self.precision, duration=self.speed)
+        try:
+            pyautogui.moveRel(1*x*self.precision, -1*y*self.precision, duration=self.speed)
+        except Exception as e:
+            log.info('pyautogui error: ', e)

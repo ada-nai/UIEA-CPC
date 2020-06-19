@@ -31,7 +31,10 @@ class LandmarkDetection:
         landmark_bin = os.path.splitext(landmark_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
-        self.network = IENetwork(landmark_xml, landmark_bin)
+        try:
+            self.network = IENetwork(landmark_xml, landmark_bin)
+        except Exception as e:
+            log.info('Landmark Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
@@ -45,12 +48,13 @@ class LandmarkDetection:
         This method is for loading the model to the device specified by the user.
         If your model requires any Plugins, this is where you can load them.
         '''
-        try:
+
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
+        try:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            raise NotImplementedError('landmark Detection Model could not be initialized/loaded.', e)
+            log.info('landmark Detection IECore object could not be initialized/loaded.', e)
         return
 
     def predict(self, image):
@@ -58,14 +62,17 @@ class LandmarkDetection:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        landmark_input = {self.input: image}
-        landmark_result = self.exec_net.infer(landmark_input)
-        landmark_result = np.squeeze(landmark_result['95']) #['detection_out'] #CHECK THIS
+        try:
+            landmark_input = {self.input: image}
+            landmark_result = self.exec_net.infer(landmark_input)
+            landmark_result = np.squeeze(landmark_result['95']) #['detection_out'] #CHECK THIS
+        except Exception as e:
+            log.info('Landmark Detection inference error: ', e)
         return landmark_result
 
     def check_model(self):
-        log.info('landmark Model Input shape: ', self.input_shape)
-        log.info('landmark Model Output shape: ', self.output_shape)
+        log.info('landmark Model Input shape: {0}'.format( str(self.input_shape) ))
+        log.info('landmark Model Output shape: {0}'.format( str(self.output_shape) ))
         pass
 
     def preprocess_input(self, image):
@@ -86,17 +93,17 @@ class LandmarkDetection:
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
         '''
-        width =  int(frame.shape[1]) #1920
-        height = int(frame.shape[0]) #1080
-        r_radius = 75
+        width = 367 #int(frame.shape[1]) #1920
+        height = 246 #int(frame.shape[0]) #1080
+        r_radius = 10
         c_radius = 5
 
         # print('landmark frame size: ', width, height)
 
         # print('landmark op normalized: ', outputs[0], outputs[1], outputs[2], outputs[3])
         #### HOLD
-        x_scale = 1920
-        y_scale = 1080
+        x_scale = 1920/367
+        y_scale = 1080/246
         x_lEye= int(outputs[0] * width)
         y_lEye = int(outputs[1] * height)
         x_rEye = int(outputs[2] * width)
@@ -110,9 +117,9 @@ class LandmarkDetection:
 
         # print('landmark op denormalized: ', x_lEye, y_lEye, x_rEye, y_rEye)
 
-        cv2.circle(frame, (x_lEye, y_lEye), c_radius, (255, 0, 0), 2)
-        cv2.circle(frame, (x_rEye, y_rEye), c_radius, (255, 0, 0), 2)
-        cv2.circle(frame, (x_nose, y_nose), c_radius, (255, 0, 0), 2)
+        cv2.circle(frame, (x_lEye, y_lEye), c_radius, (0, 0, 255), 2)
+        cv2.circle(frame, (x_rEye, y_rEye), c_radius, (0, 0, 255), 2)
+        cv2.circle(frame, (x_nose, y_nose), c_radius, (0, 255, 0), 2)
         cv2.circle(frame, (x_lLip, y_lLip), c_radius, (255, 0, 0), 2)
         cv2.circle(frame, (x_rLip, y_rLip), c_radius, (255, 0, 0), 2)
         # cv2.imshow('class_frame', frame)
