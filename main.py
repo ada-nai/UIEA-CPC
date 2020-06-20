@@ -194,7 +194,7 @@ def flow(args):
         # print(gaze_lEye.shape, gaze_rEye.shape)
 
         gpreds = time.time()
-        gaze_op = gaze_estimation.predict(axes_op, gaze_lEye, gaze_rEye)
+        gaze_op = gaze_estimation.predict(axes_op, gaze_rEye, gaze_lEye) # DISCLAIMER
         gpred = time.time() - gpreds
         tgpred += gpred
 

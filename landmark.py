@@ -96,7 +96,7 @@ class LandmarkDetection:
         temp_op = frame.copy()
         width = int(frame.shape[1]) #1920
         height = int(frame.shape[0]) #1080
-        r_radius = 10
+        r_radius = 15
         c_radius = 5
 
         # print('landmark frame size: ', width, height)
@@ -118,18 +118,31 @@ class LandmarkDetection:
 
         # print('landmark op denormalized: ', x_lEye, y_lEye, x_rEye, y_rEye)
 
-        cv2.circle(temp_op, (x_lEye, y_lEye), c_radius, (0, 0, 255), 2)
-        cv2.circle(temp_op, (x_rEye, y_rEye), c_radius, (0, 0, 255), 2)
-        cv2.circle(temp_op, (x_nose, y_nose), c_radius, (0, 255, 0), 2)
-        cv2.circle(temp_op, (x_lLip, y_lLip), c_radius, (255, 0, 0), 2)
-        cv2.circle(temp_op, (x_rLip, y_rLip), c_radius, (255, 0, 0), 2)
+        # cv2.circle(temp_op, (x_lEye, y_lEye), c_radius, (0, 0, 255), 2)
+        # cv2.circle(temp_op, (x_rEye, y_rEye), c_radius, (0, 0, 255), 2)
+        # cv2.circle(temp_op, (x_nose, y_nose), c_radius, (0, 255, 0), 2)
+        # cv2.circle(temp_op, (x_lLip, y_lLip), c_radius, (255, 0, 0), 2)
+        # cv2.circle(temp_op, (x_rLip, y_rLip), c_radius, (255, 0, 0), 2)
         # cv2.imshow('class_frame', frame)
 
         # print(x_lEye, y_lEye)
+        min_x_lEye= x_lEye-r_radius
+        min_y_lEye = y_lEye-r_radius
+        max_x_lEye= x_lEye+r_radius
+        max_y_lEye = y_lEye+r_radius
+
+        min_x_rEye = x_rEye-r_radius
+        min_y_rEye = y_rEye-r_radius
+        max_x_rEye = x_rEye+r_radius
+        max_y_rEye = y_rEye+r_radius
+
         lEye = temp_op[y_lEye-r_radius : y_lEye+r_radius , x_lEye-r_radius : x_lEye+r_radius]
-        # cv2.imshow('lEye', lEye)
+        cv2.rectangle(temp_op, (min_x_lEye, min_y_lEye), (max_x_lEye, max_y_lEye), (255, 0, 0), 2)
+
+        cv2.imshow('lEye', lEye)
         rEye = temp_op[y_rEye-r_radius : y_rEye+r_radius , x_rEye-r_radius : x_rEye+r_radius]
-        # cv2.imshow('rEye', rEye)
+        cv2.rectangle(temp_op, (min_x_rEye, min_y_rEye), (max_x_rEye, max_y_rEye), (0, 255, 0), 2)
+        cv2.imshow('rEye', rEye)
 
 
         return temp_op, lEye, rEye
