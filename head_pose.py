@@ -16,7 +16,7 @@ class HeadPoseEstimation:
     '''
     Class for the Face Detection Model.
     '''
-    def __init__(self, device='CPU', extensions=None):
+    def __init__(self, path, device='CPU', extensions=None):
         '''
         TODO: Use this to set your instance variables.
         '''
@@ -26,9 +26,11 @@ class HeadPoseEstimation:
         self.input = None
         self.output = None
         self.exec_net = None
+        self.count = 1
 
         # TODO: Save path of .bin and .xml files of model
-        head_pose_xml = os.path.abspath('../intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.xml')
+        # head_pose_xml = os.path.abspath('../intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.xml')
+        head_pose_xml = os.path.abspath(path)
         head_pose_bin = os.path.splitext(head_pose_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
@@ -59,7 +61,7 @@ class HeadPoseEstimation:
         return
 
 
-    def predict(self, image):
+    def predict(self, image, pflag):
         '''
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
@@ -67,16 +69,47 @@ class HeadPoseEstimation:
         try:
             head_pose_input = {self.input: image}
             head_pose_result = self.exec_net.infer(head_pose_input)
+
+            if pflag == 1 and (self.count == 1 or self.count%5) == 0:
+                perf_count = self.exec_net.requests[0].get_perf_counts()
+                self.get_model_perf(perf_count, self.count)
+                # print(perf_count)
+
+            self.count += 1
+
         except Exception as e:
             log.info('Head Pose Estimation inference error: ', e)
         #print(head_pose_result)
         # head_pose_result = np.squeeze(head_pose_result['95']) #['detection_out'] #CHECK THIS
         return head_pose_result
 
+
+    def get_model_perf(self, perf_count, count):
+        with open('./model_perf/head_pose.txt', 'a') as fh:
+            fh.write('Frame: '+ str(count) + '\n')
+        for layer in perf_count:
+            if perf_count[layer]['status'] == 'EXECUTED':
+                # print('layer_name: ',layer)
+                # perf_dict = {'layer_name': None, 'index': None, 'exec_time': None }
+                perf_dict = {'index': perf_count[layer]['execution_index'], 'layer_name': layer,  'exec_time': perf_count[layer]['cpu_time'] }
+                with open('./model_perf/head_pose.txt', 'a') as fh:
+                # fh.write('Frame: '+ str(count) + '\n')
+                    fh.write(str(perf_dict))
+                    fh.write('\n')
+
     def check_model(self):
         log.info('head_pose Model Input shape: {0}'.format( str(self.input_shape) ))
         log.info('head_pose Model Output shape: {0}'.format(str(self.output_shape)))
-        pass
+
+        supported_layers = self.core.query_network(network= self.network, device_name="CPU")
+
+        ### TODO: Check for any unsupported layers, and let the user
+        ###       know if anything is missing. Exit the program, if so.
+        unsupported_layers = [l for l in self.network.layers.keys() if l not in supported_layers]
+        if len(unsupported_layers) != 0:
+            log.warning("Unsupported layers found: {}".format(unsupported_layers))
+            sys.exit("Add necessary extension for given hardware")
+
 
 
     def preprocess_input(self, image):

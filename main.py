@@ -26,24 +26,37 @@ def build_argparser():
 
     :return: command line arguments
     """
-    parser = ArgumentParser('CPC App')
+    parser = ArgumentParser('Computer Pointer Controller App')
 
     parser.add_argument("-i", "--input", required=True, type=str, default = None,
                         help="Path of video file, if applicable")
-    # parser.add_argument("-l", "--cpu_extension", required=False, type=str,
-    #                     default='/opt/intel/openvino/inference_engine/lib/intel64/libcpu_extension_sse4.so',
-    #                     help="MKLDNN (CPU)-targeted custom layers."
-    #                          "Absolute path to a shared library with the"
-    #                          "kernels impl.")
-    # parser.add_argument("-d", "--device", type=str, default="CPU",
-    #                     help="Specify the target device to infer on: "
-    #                          "CPU, GPU, FPGA or MYRIAD is acceptable. Sample "
-    #                          "will look for a suitable plugin for device "
-    #                          "specified (CPU by default)")
-    # parser.add_argument("-if", "--input_type", type=str, default="video",
-    #                     help=" Input media format to the models. 'cam' or 'video'. Default set to 'video' ")
-    parser.add_argument("-vf", "--visual_flag", type=str, default= 0,
+    parser.add_argument("-l", "--extension", required=False, type=str,
+                        default=None,
+                        help="MKLDNN targeted custom layers."
+                             "Absolute path to a shared library with the"
+                             "kernels impl.")
+    parser.add_argument("-d", "--device", type=str, default="CPU",
+                        help="Specify the target device to infer on: "
+                             "CPU, GPU, FPGA or MYRIAD is acceptable. Sample "
+                             "will look for a suitable plugin for device "
+                             "specified (CPU by default)")
+    parser.add_argument("-if", "--input_type", type=str, default="video",
+                        help=" Input media format to the models. 'cam' or 'video'. Default set to 'video' ")
+
+    parser.add_argument("-fd", "--face", required=False, type=str, default = '../intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001.xml',
+                        help="Path of Face Detection model xml file")
+    parser.add_argument("-ld", "--landmark", required=False, type=str, default = '../intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.xml',
+                        help="Path of Landmark Detection model xml file")
+    parser.add_argument("-hpe", "--head_pose", required=False, type=str, default = '../intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001.xml',
+                        help="Path of Head Pose Estimation model xml file")
+    parser.add_argument("-ge", "--gaze", required=False, type=str, default = '../intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002.xml',
+                        help="Path of Gaze Estimation model xml file")
+
+    parser.add_argument("-vf", "--visual_flag", required= False, type=str, default= 0,
                         help="Flag for visualization of model outputs. Can be 0 or 1. Default set to 0.")
+
+    parser.add_argument("-pf", "--perf_flag", required= False, type=str, default= 0,
+                        help="Flag for analyzing layer-wise performance of models. Can be 0 or 1. Default set to 0.")
     args = parser.parse_args()
 
     return args
@@ -52,8 +65,14 @@ def build_argparser():
 def flow(args):
     if args.visual_flag is None:
         args.visual_flag == 0
-        log.info('Flag not input, so set to `False`')
+        log.info('Visual Flag not input, so set to `False`')
     vflag = bool(int(args.visual_flag))
+
+    if args.perf_flag is None:
+        args.perf_flag == 0
+        log.info('Performance Flag not input, so set to `False`')
+    pflag = bool(int(args.perf_flag))
+
     print('Flag: ', vflag, type(vflag))
     # total + model_initial + process/prediction
     tfproc = 0
@@ -71,28 +90,28 @@ def flow(args):
 
     # TODO: Load all the models
     face_load_start = time.time()
-    face = FaceDetection()
+    face = FaceDetection(args.face, args.device, args.extension)
     face.load_model()
     face_load_time = time.time() - face_load_start
     face.check_model()
     log.info('Face Detection object initialized')
 
     landmark_load_start = time.time()
-    landmark = LandmarkDetection()
+    landmark = LandmarkDetection(args.landmark, args.device, args.extension)
     landmark.load_model()
     landmark_load_time = time.time() - landmark_load_start
     landmark.check_model()
     log.info('Landmark Detection object initialized ')
 
     head_pose_load_start = time.time()
-    head_pose = HeadPoseEstimation()
+    head_pose = HeadPoseEstimation(args.head_pose, args.device, args.extension)
     head_pose.load_model()
     head_pose_load_time = time.time() - head_pose_load_start
     head_pose.check_model()
     log.info('Head Pose Estimation object initialized')
 
     gaze_load_start = time.time()
-    gaze_estimation = GazeEstimation()
+    gaze_estimation = GazeEstimation(args.gaze, args.device, args.extension)
     gaze_estimation.load_model()
     gaze_load_time = time.time() - gaze_load_start
     gaze_estimation.check_model()
@@ -103,7 +122,7 @@ def flow(args):
     log.info('All models loaded')
 
     # TODO: Initialize InputFeeder object
-    feed = InputFeeder(input_type= 'video', input_file= args.input)
+    feed = InputFeeder(input_type= args.input_type, input_file= args.input)
     log.info('InputFeeder object initialized.')
 
     # TODO: load the data from source
@@ -142,7 +161,7 @@ def flow(args):
 
         # print('face ip dims', face_ip.shape)
         fpreds = time.time()
-        face_op = face.predict(face_ip)
+        face_op = face.predict(face_ip, pflag)
         fpred = time.time() - fpreds
         tfpred += fpred
         batch, face_box, face_center = face.preprocess_output(batch, face_op, vflag)
@@ -158,7 +177,7 @@ def flow(args):
 
         # print('face ip dims', landmark_ip.shape)
         lpreds = time.time()
-        landmark_op = landmark.predict(landmark_ip)
+        landmark_op = landmark.predict(landmark_ip, pflag)
         lpred = time.time() - lpreds
         tlpred += lpred
 
@@ -176,7 +195,7 @@ def flow(args):
         thproc += hproc
 
         hpreds = time.time()
-        head_pose_op = head_pose.predict(head_pose_ip)
+        head_pose_op = head_pose.predict(head_pose_ip, pflag)
         hpred = time.time() - hpreds
         thpred += hpred
 
@@ -194,7 +213,7 @@ def flow(args):
         # print(gaze_lEye.shape, gaze_rEye.shape)
 
         gpreds = time.time()
-        gaze_op = gaze_estimation.predict(axes_op, gaze_rEye, gaze_lEye) # DISCLAIMER
+        gaze_op = gaze_estimation.predict(axes_op, gaze_rEye, gaze_lEye, pflag) # DISCLAIMER
         gpred = time.time() - gpreds
         tgpred += gpred
 
@@ -204,7 +223,7 @@ def flow(args):
         mc.move(x, y)
 
         count += 1
-        print(count)
+        # print(count)
 
 
     # print(tfproc/count, tlproc/count, thproc/count, tgproc/count)
