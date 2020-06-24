@@ -28,7 +28,7 @@ def build_argparser():
     """
     parser = ArgumentParser('Computer Pointer Controller App')
 
-    parser.add_argument("-i", "--input", required=True, type=str, default = None,
+    parser.add_argument("-i", "--input", required=False, type=str, default = None,
                         help="Path of video file, if applicable")
     parser.add_argument("-l", "--extension", required=False, type=str,
                         default=None,
@@ -40,7 +40,7 @@ def build_argparser():
                              "CPU, GPU, FPGA or MYRIAD is acceptable. Sample "
                              "will look for a suitable plugin for device "
                              "specified (CPU by default)")
-    parser.add_argument("-if", "--input_type", type=str, default="video",
+    parser.add_argument("-if", "--input_type", required=True, type=str, default="video",
                         help=" Input media format to the models. 'cam' or 'video'. Default set to 'video' ")
 
     parser.add_argument("-fd", "--face", required=False, type=str, default = '../intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001.xml',
@@ -95,6 +95,16 @@ def flow(args):
     face_load_time = time.time() - face_load_start
     face.check_model()
     log.info('Face Detection object initialized')
+
+    if pflag is True:
+        with open('./model_perf/face.txt', 'w') as fh:
+            fh.write('Layer wise benchmarking for `EXECUTED` layers of Face Detection Model: \n\n')
+        with open('./model_perf/landmark.txt', 'w') as fh:
+            fh.write('Layer wise benchmarking for `EXECUTED` layers of Landmark Detection Model:\n\n')
+        with open('./model_perf/head_pose.txt', 'w') as fh:
+            fh.write('Layer wise benchmarking for `EXECUTED` layers of Head Pose Estimation Model:\n\n')
+        with open('./model_perf/gaze.txt', 'w') as fh:
+            fh.write('Layer wise benchmarking for `EXECUTED` layers of Gaze Estimation Model:\n\n')
 
     landmark_load_start = time.time()
     landmark = LandmarkDetection(args.landmark, args.device, args.extension)
@@ -209,11 +219,11 @@ def flow(args):
         gaze_lEye = gaze_estimation.preprocess_input(lEye)
         gaze_rEye = gaze_estimation.preprocess_input(rEye)
         gproc = time.time() - gprocs
-        tgproc += hproc
+        tgproc += gproc
         # print(gaze_lEye.shape, gaze_rEye.shape)
 
         gpreds = time.time()
-        gaze_op = gaze_estimation.predict(axes_op, gaze_rEye, gaze_lEye, pflag) # DISCLAIMER
+        gaze_op = gaze_estimation.predict(axes_op, gaze_lEye, gaze_rEye, pflag) # DISCLAIMER
         gpred = time.time() - gpreds
         tgpred += gpred
 
@@ -262,6 +272,8 @@ def log_stats(load_times, process_times, infer_times):
     log.info('Landmark Detection Model Inference Time: {0}'.format(infer_times[1]))
     log.info('Head Pose Estimation Model Inference Time: {0}'.format(infer_times[2]))
     log.info('Gaze Estimation Model Inference Time: {0}'.format(infer_times[3]))
+
+
 
 
 

@@ -21,11 +21,14 @@ class InputFeeder:
         input_file: str, The file that contains the input image or video file. Leave empty for cam input_type.
         '''
         self.input_type=input_type
+        self.input_file = input_file
         try:
-            if input_type=='video' and input_file is not None:
+            if self.input_type=='video':
+                assert self.input_file is not None
                 self.input_file=input_file
         except:
-            log.info('Provide input file using `-i` argument. Use --help for more info')
+            print('Error occurred, refer `CPC.log` file for details')
+            log.warning('Provide input file using `-i` argument. Use --help for more info')
 
     def load_data(self):
         try:
@@ -38,7 +41,8 @@ class InputFeeder:
             else:
                 self.cap=cv2.imread(self.input_file)
         except Exception as e:
-            log.info('Error loading input media')
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Error loading input media')
 
         self.frame_width = int(self.cap.get(3))
         self.frame_height = int(self.cap.get(4))

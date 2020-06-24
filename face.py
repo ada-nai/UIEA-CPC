@@ -29,14 +29,15 @@ class FaceDetection:
         # TODO: Save path of .bin and .xml files of model
         # face_xml = os.path.abspath('../intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001.xml')
         face_xml = os.path.abspath(path)
-        print(face_xml)
+        # print(face_xml)
         face_bin = os.path.splitext(face_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
         try:
             self.network = IENetwork(face_xml, face_bin)
         except Exception as e:
-            log.info('Face Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Face Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
@@ -58,7 +59,8 @@ class FaceDetection:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            log.info('Face Detection IECore object could not be initialized/loaded.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Face Detection IECore object could not be initialized/loaded.', e)
         return
 
     def predict(self, image, pflag):
@@ -81,12 +83,13 @@ class FaceDetection:
             face_result = face_result['detection_out']
 
         except Exception as e:
-            log.info('Face Detection inference error: ', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Face Detection inference error: ', e)
         return face_result
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/face.txt', 'a') as fh:
-            fh.write('Frame: '+ str(count) + '\n')
+            fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
             if perf_count[layer]['status'] == 'EXECUTED':
                 # print('layer_name: ',layer)

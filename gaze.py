@@ -37,7 +37,8 @@ class GazeEstimation:
         try:
             self.network = IENetwork(gaze_xml, gaze_bin)
         except Exception as e:
-            log.info('Gaze Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         gaze_iter = iter(self.network.inputs)
         self.head_pose_angles = next(gaze_iter)
@@ -64,7 +65,8 @@ class GazeEstimation:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            log.info('Gaze Estimation IECore object could not be initialized/loaded.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation IECore object could not be initialized/loaded.', e)
         return
 
 
@@ -91,14 +93,15 @@ class GazeEstimation:
 
 
         except Exception as e:
-            log.info('Gaze Estimation inference error: ', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation inference error: ', e)
 
         # gaze_result = np.squeeze(gaze_result['95']) #['detection_out'] #CHECK THIS
         return gaze_result
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/gaze.txt', 'a') as fh:
-            fh.write('Frame: '+ str(count) + '\n')
+            fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
             if perf_count[layer]['status'] == 'EXECUTED':
                 # print('layer_name: ',layer)
@@ -140,7 +143,7 @@ class GazeEstimation:
             temp = temp.reshape(1, *temp.shape)
             # print('post process shape: ',temp.shape)
         except:
-            log.info('Frame ignored')
+            log.warning('Frame ignored')
         return temp
 
 

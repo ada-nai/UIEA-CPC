@@ -37,7 +37,8 @@ class LandmarkDetection:
         try:
             self.network = IENetwork(landmark_xml, landmark_bin)
         except Exception as e:
-            log.info('Landmark Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Landmark Detection IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
@@ -57,7 +58,8 @@ class LandmarkDetection:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            log.info('landmark Detection IECore object could not be initialized/loaded.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('landmark Detection IECore object could not be initialized/loaded.', e)
         return
 
     def predict(self, image, pflag):
@@ -78,12 +80,13 @@ class LandmarkDetection:
             self.count += 1
 
         except Exception as e:
-            log.info('Landmark Detection inference error: ', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Landmark Detection inference error: ', e)
         return landmark_result
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/landmark.txt', 'a') as fh:
-            fh.write('Frame: '+ str(count) + '\n')
+            fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
             if perf_count[layer]['status'] == 'EXECUTED':
                 # print('layer_name: ',layer)
@@ -128,7 +131,7 @@ class LandmarkDetection:
         temp_op = frame.copy()
         width = int(frame.shape[1]) #1920
         height = int(frame.shape[0]) #1080
-        r_radius = 15
+        r_radius = 18
         c_radius = 5
 
         # print('landmark frame size: ', width, height)

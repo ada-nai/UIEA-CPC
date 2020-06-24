@@ -37,7 +37,8 @@ class HeadPoseEstimation:
         try:
             self.network = IENetwork(head_pose_xml, head_pose_bin)
         except Exception as e:
-            log.info('Head Pose Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Head Pose Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
         self.input = next(iter(self.network.inputs))
         self.input_shape = self.network.inputs[self.input].shape
@@ -57,7 +58,8 @@ class HeadPoseEstimation:
             self.core = IECore()
             self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
         except Exception as e:
-            log.info('Head Pose Estimation IECore object could not be initialized/loaded.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Head Pose Estimation IECore object could not be initialized/loaded.', e)
         return
 
 
@@ -78,7 +80,8 @@ class HeadPoseEstimation:
             self.count += 1
 
         except Exception as e:
-            log.info('Head Pose Estimation inference error: ', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Head Pose Estimation inference error: ', e)
         #print(head_pose_result)
         # head_pose_result = np.squeeze(head_pose_result['95']) #['detection_out'] #CHECK THIS
         return head_pose_result
@@ -86,7 +89,7 @@ class HeadPoseEstimation:
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/head_pose.txt', 'a') as fh:
-            fh.write('Frame: '+ str(count) + '\n')
+            fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
             if perf_count[layer]['status'] == 'EXECUTED':
                 # print('layer_name: ',layer)
