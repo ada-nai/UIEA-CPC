@@ -1,6 +1,5 @@
 '''
-This is a sample class for a model. You may choose to use it as-is or make any changes to it.
-This has been provided just to give you an idea of how to structure your model class.
+This class deals with the HeadPoseEstimation model and the various operations associated with it.
 '''
 import os
 import sys
@@ -18,7 +17,7 @@ class HeadPoseEstimation:
     '''
     def __init__(self, path, device='CPU', extensions=None):
         '''
-        TODO: Use this to set your instance variables.
+        TODO: Set instance variables.
         '''
         # TODO: Initialize attributes
         self.network = None
@@ -26,6 +25,8 @@ class HeadPoseEstimation:
         self.input = None
         self.output = None
         self.exec_net = None
+        self.device = device
+        self.extension = extensions
         self.count = 1
 
         # TODO: Save path of .bin and .xml files of model
@@ -47,16 +48,13 @@ class HeadPoseEstimation:
 
 
     def load_model(self):
-        '''
-        TODO: You will need to complete this method.
-        This method is for loading the model to the device specified by the user.
-        If your model requires any Plugins, this is where you can load them.
-        '''
 
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
         try:
             self.core = IECore()
-            self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
+            self.exec_net = self.core.load_network(network= self.network, device_name= self.device, num_requests= 1)
+            if self.extension is not None:
+                self.core.add_extension(extension_path= self.extension, device_name= self.device)
         except Exception as e:
             print('Error occurred, refer `CPC.log` file for details')
             log.error('Head Pose Estimation IECore object could not be initialized/loaded.', e)
@@ -64,39 +62,39 @@ class HeadPoseEstimation:
 
 
     def predict(self, image, pflag):
-        '''
-        TODO: You will need to complete this method.
-        This method is meant for running predictions on the input image.
-        '''
+
+        # TODO: Predict and dump perf_count if pflag
+
         try:
             head_pose_input = {self.input: image}
             head_pose_result = self.exec_net.infer(head_pose_input)
 
+            # TODO: Post stats for every 5th frame
+
             if pflag == 1 and (self.count == 1 or self.count%5) == 0:
                 perf_count = self.exec_net.requests[0].get_perf_counts()
                 self.get_model_perf(perf_count, self.count)
-                # print(perf_count)
 
             self.count += 1
 
         except Exception as e:
             print('Error occurred, refer `CPC.log` file for details')
             log.error('Head Pose Estimation inference error: ', e)
-        #print(head_pose_result)
-        # head_pose_result = np.squeeze(head_pose_result['95']) #['detection_out'] #CHECK THIS
         return head_pose_result
 
+    # TODO: Method to dump perf_count stats
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/head_pose.txt', 'a') as fh:
             fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
+            # TODO: Check for layers with `EXECUTED` status only
+
             if perf_count[layer]['status'] == 'EXECUTED':
-                # print('layer_name: ',layer)
-                # perf_dict = {'layer_name': None, 'index': None, 'exec_time': None }
+                # TODO: Extract major parameters
+
                 perf_dict = {'index': perf_count[layer]['execution_index'], 'layer_name': layer,  'exec_time': perf_count[layer]['cpu_time'] }
                 with open('./model_perf/head_pose.txt', 'a') as fh:
-                # fh.write('Frame: '+ str(count) + '\n')
                     fh.write(str(perf_dict))
                     fh.write('\n')
 
@@ -118,17 +116,15 @@ class HeadPoseEstimation:
     def preprocess_input(self, image):
         '''
         Before feeding the data into the model for inference,
-        you might have to preprocess it. This function is where you can do that.
+        you might have to preprocess it. This function does that.
         '''
         temp = image.copy()
-        # print('preprocess shape: ',  temp.shape)
         temp = cv2.resize(temp, (self.input_shape[3], self.input_shape[2] ) ) # n,c,h,w
         temp = temp.transpose((2, 0, 1))
         temp = temp.reshape(1, *temp.shape)
-        # print('post process shape: ',temp.shape)
         return temp
 
-
+    # TODO: Head Pose output visualization method
     def draw_axes(self, frame, center_of_face, yaw, pitch, roll, scale, focal_length):
         yaw *= np.pi / 180.0
         pitch *= np.pi / 180.0
@@ -144,11 +140,8 @@ class HeadPoseEstimation:
         Rz = np.array([[math.cos(roll), -math.sin(roll), 0],
                        [math.sin(roll), math.cos(roll), 0],
                        [0, 0, 1]])
-        # R = np.dot(Rz, Ry, Rx)
-        # ref: https://www.learnopencv.com/rotation-matrix-to-euler-angles/
-        # R = np.dot(Rz, np.dot(Ry, Rx))
+
         R = Rz @ Ry @ Rx
-        # print(R)
         camera_matrix = self.build_camera_matrix(center_of_face, focal_length)
         xaxis = np.array(([1 * scale, 0, 0]), dtype='float32').reshape(3, 1)
         yaxis = np.array(([0, -1 * scale, 0]), dtype='float32').reshape(3, 1)
@@ -193,8 +186,9 @@ class HeadPoseEstimation:
     def preprocess_output(self, frame, outputs, f_center):
         '''
         Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        you might have to preprocess the output. This function does that.
         '''
+        ## TODO: Pitch, Roll, Yaw angles
         pitch = np.squeeze(outputs['angle_p_fc'])
         roll = np.squeeze(outputs['angle_r_fc'])
         yaw = np.squeeze(outputs['angle_y_fc'])
