@@ -34,7 +34,7 @@ def build_argparser():
                         default=None,
                         help="MKLDNN targeted custom layers."
                              "Absolute path to a shared library with the"
-                             "kernels impl.")
+                             "kernels implementation.")
     parser.add_argument("-d", "--device", type=str, default="CPU",
                         help="Specify the target device to infer on: "
                              "CPU, GPU, FPGA or MYRIAD is acceptable. Sample "
@@ -214,7 +214,7 @@ def flow(args):
         x, y, z = gaze_estimation.preprocess_output(gaze_op)
 
         # TODO: send gaze results to mouse_controller
-        mc = MouseController('high', 'fast')
+        mc = MouseController('low', 'fast')
         mc.move(x, y)
 
         count += 1

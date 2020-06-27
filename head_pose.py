@@ -102,7 +102,7 @@ class HeadPoseEstimation:
         log.info('head_pose Model Input shape: {0}'.format( str(self.input_shape) ))
         log.info('head_pose Model Output shape: {0}'.format(str(self.output_shape)))
 
-        supported_layers = self.core.query_network(network= self.network, device_name="CPU")
+        supported_layers = self.core.query_network(network= self.network, device_name= self.device)
 
         ### TODO: Check for any unsupported layers, and let the user
         ###       know if anything is missing. Exit the program, if so.

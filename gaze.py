@@ -79,8 +79,7 @@ class GazeEstimation:
             if pflag == 1 and (self.count == 1 or self.count%5) == 0:
                 perf_count = self.exec_net.requests[0].get_perf_counts()
                 self.get_model_perf(perf_count, self.count)
-                # print(perf_count)
-
+                
             self.count += 1
 
 
@@ -88,6 +87,7 @@ class GazeEstimation:
             print('Error occurred, refer `CPC.log` file for details')
             log.error('Gaze Estimation inference error: ', e)
 
+        print(gaze_result)
         return gaze_result
 
     def get_model_perf(self, perf_count, count):
@@ -108,7 +108,7 @@ class GazeEstimation:
         log.info('gaze output: {0}'.format(self.output))
         log.info('gaze output shape: {0}'.format( self.output_shape))
 
-        supported_layers = self.core.query_network(network= self.network, device_name="CPU")
+        supported_layers = self.core.query_network(network= self.network, device_name= self.device)
 
         ### TODO: Check for any unsupported layers, and let the user
         ###       know if anything is missing. Exit the program, if so.

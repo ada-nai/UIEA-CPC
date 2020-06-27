@@ -31,7 +31,6 @@ class LandmarkDetection:
         # TODO: Save path of .bin and .xml files of model
         # landmark_xml = os.path.abspath('../intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009.xml')
         landmark_xml = os.path.abspath(path)
-        print(landmark_xml)
         landmark_bin = os.path.splitext(landmark_xml)[0]+'.bin'
 
         # TODO: Initialize IENetwork object
@@ -103,7 +102,7 @@ class LandmarkDetection:
         log.info('landmark Model Input shape: {0}'.format( str(self.input_shape) ))
         log.info('landmark Model Output shape: {0}'.format( str(self.output_shape) ))
 
-        supported_layers = self.core.query_network(network= self.network, device_name="CPU")
+        supported_layers = self.core.query_network(network= self.network, device_name= self.device)
 
         ### TODO: Check for any unsupported layers, and let the user
         ###       know if anything is missing. Exit the program, if so.

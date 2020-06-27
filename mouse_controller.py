@@ -11,7 +11,7 @@ import pyautogui
 
 class MouseController:
     def __init__(self, precision, speed):
-        precision_dict={'high':100, 'low':1000, 'medium':500}
+        precision_dict={'high':1000, 'low':100, 'medium':500}
         speed_dict={'fast':1, 'slow':10, 'medium':5}
 
         self.precision=precision_dict[precision]
@@ -23,3 +23,4 @@ class MouseController:
         except Exception as e:
             print('Error occurred, refer `CPC.log` file for details')
             log.error('pyautogui error: ', e)
+            pass
