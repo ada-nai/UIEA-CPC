@@ -1,6 +1,5 @@
 '''
-This is a sample class for a model. You may choose to use it as-is or make any changes to it.
-This has been provided just to give you an idea of how to structure your model class.
+This class deals with the GazeEstimation model and the various operations associated with it.
 '''
 
 import os
@@ -17,7 +16,7 @@ class GazeEstimation:
     '''
     def __init__(self, path, device='CPU', extensions=None):
         '''
-        TODO: Use this to set your instance variables.
+        TODO: Set instance variables.
         '''
 
         # TODO: Initialize attributes
@@ -26,6 +25,8 @@ class GazeEstimation:
         self.input = None
         self.output = None
         self.exec_net = None
+        self.device = device
+        self.extension = extensions
         self.count = 1
 
         # TODO: Save path of .bin and .xml files of model
@@ -37,8 +38,10 @@ class GazeEstimation:
         try:
             self.network = IENetwork(gaze_xml, gaze_bin)
         except Exception as e:
-            log.info('Gaze Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation IENetwork object could not be initialized/loaded. Check if model files are stored in correct path.', e)
 
+        # Initialize the three inputs that the model requires
         gaze_iter = iter(self.network.inputs)
         self.head_pose_angles = next(gaze_iter)
         self.left_eye_image = next(gaze_iter)
@@ -53,34 +56,25 @@ class GazeEstimation:
 
 
     def load_model(self):
-        '''
-        TODO: You will need to complete this method.
-        This method is for loading the model to the device specified by the user.
-        If your model requires any Plugins, this is where you can load them.
-        '''
 
             # TODO: Initialize IECore object and load the network as ExecutableNetwork object
         try:
             self.core = IECore()
-            self.exec_net = self.core.load_network(network= self.network, device_name= 'CPU', num_requests= 1)
+            self.exec_net = self.core.load_network(network= self.network, device_name= self.device, num_requests= 1)
+            if self.extension is not None:
+                self.core.add_extension(extension_path= self.extension, device_name= self.device)
         except Exception as e:
-            log.info('Gaze Estimation IECore object could not be initialized/loaded.', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation IECore object could not be initialized/loaded.', e)
         return
 
 
 
     def predict(self, axes_arr, left_eye, right_eye, pflag):
-        '''
-        TODO: You will need to complete this method.
-        This method is meant for running predictions on the input image.
-        '''
+
         try:
             gaze_input = {self.head_pose_angles: axes_arr, self.left_eye_image: left_eye, self.right_eye_image: right_eye}
-            # try:
             gaze_result = self.exec_net.infer(gaze_input)
-            # print(gaze_result)
-            # except:
-            #     print('Output could not be evaluated')
 
             if pflag == 1 and (self.count == 1 or self.count%5) == 0:
                 perf_count = self.exec_net.requests[0].get_perf_counts()
@@ -91,21 +85,18 @@ class GazeEstimation:
 
 
         except Exception as e:
-            log.info('Gaze Estimation inference error: ', e)
+            print('Error occurred, refer `CPC.log` file for details')
+            log.error('Gaze Estimation inference error: ', e)
 
-        # gaze_result = np.squeeze(gaze_result['95']) #['detection_out'] #CHECK THIS
         return gaze_result
 
     def get_model_perf(self, perf_count, count):
         with open('./model_perf/gaze.txt', 'a') as fh:
-            fh.write('Frame: '+ str(count) + '\n')
+            fh.write('Frame: '+ str(count) + '\n\n')
         for layer in perf_count:
             if perf_count[layer]['status'] == 'EXECUTED':
-                # print('layer_name: ',layer)
-                # perf_dict = {'layer_name': None, 'index': None, 'exec_time': None }
                 perf_dict = {'index': perf_count[layer]['execution_index'], 'layer_name': layer,  'exec_time': perf_count[layer]['cpu_time'] }
                 with open('./model_perf/gaze.txt', 'a') as fh:
-                # fh.write('Frame: '+ str(count) + '\n')
                     fh.write(str(perf_dict))
                     fh.write('\n')
 
@@ -130,24 +121,23 @@ class GazeEstimation:
     def preprocess_input(self, image):
         '''
         Before feeding the data into the model for inference,
-        you might have to preprocess it. This function is where you can do that.
+        you might have to preprocess it. This function does that.
         '''
+        ## TODO: Ignore frame if input frame has invalid/dubious dimensions
         try:
             temp = image.copy()
-            # print('preprocess shape: ',  temp.shape)
             temp = cv2.resize(temp, (self.left_eye_image_shape[3], self.left_eye_image_shape[2]) ) # n,c,h,w
             temp = temp.transpose((2, 0, 1))
             temp = temp.reshape(1, *temp.shape)
-            # print('post process shape: ',temp.shape)
         except:
-            log.info('Frame ignored')
+            log.warning('Frame ignored')
         return temp
 
 
     def preprocess_output(self, outputs):
         '''
         Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
+        you might have to preprocess the output. This function does that.
         '''
         output = np.squeeze(outputs['gaze_vector'])
         x = output[0]
