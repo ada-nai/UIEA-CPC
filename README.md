@@ -179,7 +179,7 @@ The options available for user to configure the CPC app are as follows:
 ## 6. Benchmarks
 The different time related parameters were measured and the comparison of times between FP32 and FP16 models is shown below:
 
-![Timing Benchmark](https://raw.githubusercontent.com/ada-nai/UIEA-CPC/fin/Timing%20Models.png)
+![Timing Benchmark](https://raw.githubusercontent.com/ada-nai/UIEA-CPC/master/Timing%20Models.png)
 
 - We can observe that the model loading time and the average processing time for models of FP16 precision are significantly lower than the FP32 precision counterparts
 - This is because the model weights are of lower precision and occupy lesser memory and are thus faster to load
